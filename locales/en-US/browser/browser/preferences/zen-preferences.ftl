@@ -360,3 +360,21 @@ zen-close-all-unpinned-tabs-shortcut = Close All Unpinned Tabs
 zen-new-unsynced-window-shortcut = New Blank Window
 zen-duplicate-tab-shortcut = Duplicate Tab
 zen-key-find-selection = Find Selection
+
+pane-zen-sync-title = Zen Sync
+category-zen-sync =
+    .tooltiptext = { pane-zen-sync-title }
+
+zen-sync-setup-header = Sync Account Setup
+zen-sync-setup-description = Connect your browser to a self-hosted or public Zen Sync relay to synchronize workspaces and tabs.
+zen-sync-relay-url-label = Relay URL:
+zen-sync-token-label = Registration Token:
+zen-sync-device-name-label = Device Name:
+zen-sync-passphrase-label = Passphrase:
+zen-sync-join-fields-label = Credentials:
+zen-sync-status-header = Sync Connection Status
+zen-sync-status-label = Status:
+zen-sync-active-device-label = Device Name:
+zen-sync-account-id-label = Account ID:
+zen-sync-salt-label = Key Salt:
+zen-sync-last-time-label = Last Synced: Never

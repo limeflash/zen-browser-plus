@@ -1,0 +1,82 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+<html:template id="template-paneZenSync">
+<hbox id="zenSyncCategory"
+      class="subcategory"
+      hidden="true"
+      data-category="paneZenSync">
+  <html:h1 data-l10n-id="pane-zen-sync-title"/>
+</hbox>
+
+<groupbox id="zenSyncSetupGroup" data-category="paneZenSync" hidden="true" class="highlighting-group">
+      <label><html:h2 data-l10n-id="zen-sync-setup-header"/></label>
+      <description class="description-deemphasized" data-l10n-id="zen-sync-setup-description" />
+
+      <hbox align="center" style="margin-bottom: 8px;">
+            <label data-l10n-id="zen-sync-relay-url-label" style="width: 150px;"/>
+            <html:input id="zenSyncRelayUrl" type="text" placeholder="https://your-relay.example.com" style="flex: 1; padding: 4px;"/>
+      </hbox>
+      <hbox align="center" style="margin-bottom: 8px;">
+            <label data-l10n-id="zen-sync-token-label" style="width: 150px;"/>
+            <html:input id="zenSyncToken" type="text" placeholder="Paste registration token (optional)" style="flex: 1; padding: 4px;"/>
+      </hbox>
+      <hbox align="center" style="margin-bottom: 8px;">
+            <label data-l10n-id="zen-sync-device-name-label" style="width: 150px;"/>
+            <html:input id="zenSyncDeviceName" type="text" placeholder="My Device" style="flex: 1; padding: 4px;"/>
+      </hbox>
+      <hbox align="center" style="margin-bottom: 8px;">
+            <label data-l10n-id="zen-sync-passphrase-label" style="width: 150px;"/>
+            <html:input id="zenSyncPassphrase" type="password" placeholder="Encryption Passphrase" style="flex: 1; padding: 4px;"/>
+      </hbox>
+      <hbox align="center" style="margin-bottom: 8px;" id="zenSyncJoinFields" hidden="true">
+            <label data-l10n-id="zen-sync-join-fields-label" style="width: 150px;"/>
+            <html:input id="zenSyncJoinAccountId" type="text" placeholder="Account ID (for joining)" style="margin-right: 4px; width: 150px; padding: 4px;"/>
+            <html:input id="zenSyncJoinSalt" type="text" placeholder="Salt (for joining)" style="flex: 1; padding: 4px;"/>
+      </hbox>
+
+      <hbox align="center" style="margin-top: 12px; gap: 8px;">
+            <button id="zenSyncBtnSetup" class="accent-button" label="Create New Sync Account"/>
+            <button id="zenSyncBtnJoin" label="Join Existing Sync Account"/>
+            <button id="zenSyncBtnToggleJoin" label="Show Join Fields"/>
+      </hbox>
+</groupbox>
+
+<groupbox id="zenSyncStatusGroup" data-category="paneZenSync" hidden="true" class="highlighting-group">
+      <label><html:h2 data-l10n-id="zen-sync-status-header"/></label>
+      
+      <hbox align="center" style="margin-bottom: 12px;">
+            <label data-l10n-id="zen-sync-status-label" style="font-weight: bold; width: 150px;"/>
+            <hbox align="center">
+                  <html:span id="zenSyncStatusDot" style="width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; background: #64748b;"/>
+                  <html:span id="zenSyncStatusText">Loading Status...</html:span>
+            </hbox>
+      </hbox>
+
+      <hbox align="center" style="margin-bottom: 8px;">
+            <label data-l10n-id="zen-sync-active-device-label" style="width: 150px;"/>
+            <html:input id="zenSyncActiveDeviceName" style="width: 200px; padding: 4px;"/>
+            <button id="zenSyncBtnRenameDevice" label="Save Name" style="margin-left: 6px;"/>
+      </hbox>
+
+      <hbox align="center" style="margin-bottom: 8px;">
+            <label data-l10n-id="zen-sync-account-id-label" style="width: 150px;"/>
+            <html:input id="zenSyncAccountId" readonly="true" style="font-family: monospace; flex: 1; padding: 4px; background: transparent; border: 1px solid #ccc;"/>
+      </hbox>
+
+      <hbox align="center" style="margin-bottom: 8px;">
+            <label data-l10n-id="zen-sync-salt-label" style="width: 150px;"/>
+            <html:input id="zenSyncSalt" readonly="true" style="font-family: monospace; flex: 1; padding: 4px; background: transparent; border: 1px solid #ccc;"/>
+      </hbox>
+
+      <hbox align="center" style="margin-bottom: 12px;">
+            <label id="zenSyncLastTime" data-l10n-id="zen-sync-last-time-label" style="font-size: 12px; color: #64748b;"/>
+      </hbox>
+
+      <hbox align="center" style="gap: 8px;">
+            <button id="zenSyncBtnSyncNow" class="accent-button" label="Sync Now"/>
+            <button id="zenSyncBtnDisconnect" label="Disconnect Account"/>
+      </hbox>
+</groupbox>
+</html:template>

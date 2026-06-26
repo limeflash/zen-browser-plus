@@ -28,7 +28,7 @@ index 57add34d876fb885275f1147209c6fbeee367a7c..be0ab43b299317c0022a5e719f47a070
          // Replace the template element with the nodes inside of it.
          template.replaceWith(template.content);
  
-@@ -522,6 +525,10 @@ function init_all() {
+@@ -522,6 +525,11 @@ function init_all() {
    register_module("paneSearch", gSearchPane);
    register_module("panePrivacy", gPrivacyPane);
    register_module("paneContainers", gContainersPane);
@@ -36,10 +36,11 @@ index 57add34d876fb885275f1147209c6fbeee367a7c..be0ab43b299317c0022a5e719f47a070
 +  register_module("paneZenTabManagement", gZenWorkspacesSettings);
 +  register_module("paneZenCKS", gZenCKSSettings);
 +  register_module("paneZenMarketplace", gZenMarketplaceManager);
++  register_module("paneZenSync", gZenSyncSettings);
  
    // Restore the cached Firefox Labs nav button visibility so it shows
    // immediately when recipes are expected to be available, before
-@@ -651,9 +658,9 @@ async function gotoPref(
+@@ -651,9 +659,9 @@ async function gotoPref(
    let redesignEnabled = srdSectionPrefs.all;
    let categories = document.getElementById("categories");
    const kDefaultCategoryInternalName = redesignEnabled

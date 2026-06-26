@@ -933,6 +933,19 @@ export class nsZenSessionManager {
     }
     return Cu.cloneInto(sidebar.spaces, {});
   }
+
+  /**
+   * Sets the sync data directly into the session manager memory and writes to disk.
+   *
+   * @param {object} data - The synced sidebar state data.
+   */
+  setSyncData(data) {
+    this.#sidebar = data;
+    if (this.#file) {
+      this.#file.data = data;
+      this.#file._save();
+    }
+  }
 }
 
 export const ZenSessionStore = new nsZenSessionManager();
