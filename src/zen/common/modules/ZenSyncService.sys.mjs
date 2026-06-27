@@ -90,25 +90,31 @@ export class nsZenSyncService {
   }
 
   async storeSecret(username, secret) {
-    // Remove existing if any
-    this.deleteSecret(username);
-
-    const loginInfo = Cc["@mozilla.org/loginmanager/logininfo;1"].createInstance(Ci.nsILoginInfo);
-    loginInfo.init("chrome://zensync", null, "Zen Sync Credential Manager", username, secret, "", "");
-    Services.logins.addLogin(loginInfo);
+    if (username === "auth_token") {
+      Services.prefs.setStringPref("zen.sync.auth_token", secret);
+    } else if (username === "passphrase") {
+      Services.prefs.setStringPref("zen.sync.passphrase", secret);
+    }
   }
 
   getSecret(username) {
-    const logins = Services.logins.findLogins("chrome://zensync", null, "Zen Sync Credential Manager");
-    const login = logins.find(l => l.username === username);
-    return login ? login.password : null;
+    if (username === "auth_token") {
+      return this.#getStringPref("zen.sync.auth_token");
+    }
+    if (username === "passphrase") {
+      return this.#getStringPref("zen.sync.passphrase");
+    }
+    return null;
   }
 
   deleteSecret(username) {
-    const logins = Services.logins.findLogins("chrome://zensync", null, "Zen Sync Credential Manager");
-    const login = logins.find(l => l.username === username);
-    if (login) {
-      Services.logins.removeLogin(login);
+    const pref = username === "auth_token" ? "zen.sync.auth_token" : "zen.sync.passphrase";
+    try {
+      if (Services.prefs.prefHasUserValue(pref)) {
+        Services.prefs.clearUserPref(pref);
+      }
+    } catch (e) {
+      console.error(`ZenSync: error deleting secret pref ${pref}:`, e);
     }
   }
 
@@ -423,7 +429,9 @@ export class nsZenSyncService {
       "zen.sync.salt",
       "zen.sync.last_sync_time",
       "zen.sync.last_sync_details",
-      "zen.sync.connected"
+      "zen.sync.connected",
+      "zen.sync.auth_token",
+      "zen.sync.passphrase"
     ];
 
     for (const pref of prefsToClear) {
