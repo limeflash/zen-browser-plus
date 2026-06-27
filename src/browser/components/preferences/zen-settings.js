@@ -1332,99 +1332,110 @@ var gZenSyncSettings = {
   },
 
   async updateUI() {
-    const isConfigured = await ZenSyncService.isConfigured();
-    const setupGroup = document.getElementById("zenSyncSetupGroup");
-    const statusGroup = document.getElementById("zenSyncStatusGroup");
+    try {
+      const isConfigured = await ZenSyncService.isConfigured();
+      const setupGroup = document.getElementById("zenSyncSetupGroup");
+      const statusGroup = document.getElementById("zenSyncStatusGroup");
 
-    if (!isConfigured) {
-      setupGroup.hidden = false;
-      statusGroup.hidden = true;
-      try {
-        this.relayUrlInput.value = Services.prefs.getStringPref("zen.sync.relay_url");
-      } catch (e) {
-        this.relayUrlInput.value = "";
-      }
-      this.deviceNameInput.value = "";
-      this.passphraseInput.value = "";
-      this.tokenInput.value = "";
-      this.joinAccountIdInput.value = "";
-      this.joinSaltInput.value = "";
-      this.isJoinMode = true; // force toggleSetupMode to switch to false (Create Mode)
-      this.toggleSetupMode();
-    } else {
-      setupGroup.hidden = true;
-      statusGroup.hidden = false;
-      
-      const config = await ZenSyncService.getConfig();
-      this.activeDeviceInput.value = config.deviceName || "";
-      this.accountIdInput.value = config.accountId || "";
-      this.saltInput.value = config.salt || "";
-      
-      const status = await ZenSyncService.getStatus();
-      this.statusText.textContent = status.connected ? "Connected" : "Disconnected (Error)";
-      this.statusDot.style.background = status.connected ? "#10b981" : "#ef4444";
-      
-      if (status.lastSyncTime) {
-        const timeStr = new Date(status.lastSyncTime).toLocaleString();
-        this.lastTimeLabel.value = `Last Synced: ${timeStr} (${status.lastSyncDetails || "Success"})`;
-      } else {
-        this.lastTimeLabel.value = "Last Synced: Never";
-      }
-
-      // Update linked devices list
-      const listContainer = document.getElementById("zenSyncDeviceList");
-      if (listContainer) {
-        listContainer.textContent = "";
+      if (!isConfigured) {
+        setupGroup.hidden = false;
+        statusGroup.hidden = true;
         try {
-          const devices = await ZenSyncService.listDevices();
-          if (devices && devices.length > 0) {
-            for (const device of devices) {
-              const deviceRow = document.createElement("div");
-              deviceRow.className = "device-item-row";
-
-              const nameSpan = document.createElement("span");
-              nameSpan.textContent = device.name + (device.device_id === config.deviceId ? " (Current Device)" : "");
-              nameSpan.style.flex = "1";
-              nameSpan.style.fontWeight = device.device_id === config.deviceId ? "600" : "400";
-
-              const seenSpan = document.createElement("span");
-              seenSpan.style.color = "var(--in-content-deemphasized-text, #a3a3a3)";
-              seenSpan.style.fontSize = "11px";
-              seenSpan.style.marginRight = "12px";
-              const lastSeenDate = new Date(device.last_seen * 1000).toLocaleString();
-              seenSpan.textContent = `Last seen: ${lastSeenDate}`;
-
-              deviceRow.appendChild(nameSpan);
-              deviceRow.appendChild(seenSpan);
-
-              if (device.device_id !== config.deviceId) {
-                const revokeBtn = document.createElement("button");
-                revokeBtn.textContent = "Revoke";
-                revokeBtn.className = "accessory-button";
-                revokeBtn.setAttribute("is", "highlightable-button");
-                revokeBtn.addEventListener("click", async () => {
-                  if (confirm(`Are you sure you want to revoke/remove device "${device.name}"?`)) {
-                    revokeBtn.disabled = true;
-                    try {
-                      await ZenSyncService.deleteDevice(device.device_id);
-                      await this.updateUI();
-                    } catch (e) {
-                      alert(`Failed to revoke device: ${e.message}`);
-                      revokeBtn.disabled = false;
-                    }
-                  }
-                });
-                deviceRow.appendChild(revokeBtn);
-              }
-
-              listContainer.appendChild(deviceRow);
-            }
-          } else {
-            listContainer.textContent = "No linked devices found.";
-          }
+          this.relayUrlInput.value = Services.prefs.getStringPref("zen.sync.relay_url");
         } catch (e) {
-          listContainer.textContent = `Error loading devices: ${e.message}`;
+          this.relayUrlInput.value = "";
         }
+        this.deviceNameInput.value = "";
+        this.passphraseInput.value = "";
+        this.tokenInput.value = "";
+        this.joinAccountIdInput.value = "";
+        this.joinSaltInput.value = "";
+        this.isJoinMode = true; // force toggleSetupMode to switch to false (Create Mode)
+        this.toggleSetupMode();
+      } else {
+        setupGroup.hidden = true;
+        statusGroup.hidden = false;
+        
+        const config = await ZenSyncService.getConfig();
+        this.activeDeviceInput.value = config.deviceName || "";
+        this.accountIdInput.value = config.accountId || "";
+        this.saltInput.value = config.salt || "";
+        
+        const status = await ZenSyncService.getStatus();
+        this.statusText.textContent = status.connected ? "Connected" : "Disconnected (Error)";
+        this.statusDot.style.background = status.connected ? "#10b981" : "#ef4444";
+        
+        if (status.lastSyncTime) {
+          const timeStr = new Date(status.lastSyncTime).toLocaleString();
+          this.lastTimeLabel.value = `Last Synced: ${timeStr} (${status.lastSyncDetails || "Success"})`;
+        } else {
+          this.lastTimeLabel.value = "Last Synced: Never";
+        }
+
+        // Update linked devices list
+        const listContainer = document.getElementById("zenSyncDeviceList");
+        if (listContainer) {
+          listContainer.textContent = "";
+          try {
+            const devices = await ZenSyncService.listDevices();
+            if (devices && devices.length > 0) {
+              for (const device of devices) {
+                const deviceRow = document.createElement("div");
+                deviceRow.className = "device-item-row";
+
+                const nameSpan = document.createElement("span");
+                nameSpan.textContent = device.name + (device.device_id === config.deviceId ? " (Current Device)" : "");
+                nameSpan.style.flex = "1";
+                nameSpan.style.fontWeight = device.device_id === config.deviceId ? "600" : "400";
+
+                const seenSpan = document.createElement("span");
+                seenSpan.style.color = "var(--in-content-deemphasized-text, #a3a3a3)";
+                seenSpan.style.fontSize = "11px";
+                seenSpan.style.marginRight = "12px";
+                const lastSeenDate = new Date(device.last_seen * 1000).toLocaleString();
+                seenSpan.textContent = `Last seen: ${lastSeenDate}`;
+
+                deviceRow.appendChild(nameSpan);
+                deviceRow.appendChild(seenSpan);
+
+                if (device.device_id !== config.deviceId) {
+                  const revokeBtn = document.createElement("button");
+                  revokeBtn.textContent = "Revoke";
+                  revokeBtn.className = "accessory-button";
+                  revokeBtn.setAttribute("is", "highlightable-button");
+                  revokeBtn.addEventListener("click", async () => {
+                    if (confirm(`Are you sure you want to revoke/remove device "${device.name}"?`)) {
+                      revokeBtn.disabled = true;
+                      try {
+                        await ZenSyncService.deleteDevice(device.device_id);
+                        await this.updateUI();
+                      } catch (e) {
+                        alert(`Failed to revoke device: ${e.message}`);
+                        revokeBtn.disabled = false;
+                      }
+                    }
+                  });
+                  deviceRow.appendChild(revokeBtn);
+                }
+
+                listContainer.appendChild(deviceRow);
+              }
+            } else {
+              listContainer.textContent = "No linked devices found.";
+            }
+          } catch (e) {
+            listContainer.textContent = `Error loading devices: ${e.message}`;
+          }
+        }
+      }
+    } catch (e) {
+      console.error("ZenSync: error updating UI:", e);
+      // Fallback: force UI state swap
+      const setupGroup = document.getElementById("zenSyncSetupGroup");
+      const statusGroup = document.getElementById("zenSyncStatusGroup");
+      if (setupGroup && statusGroup) {
+        setupGroup.hidden = false;
+        statusGroup.hidden = true;
       }
     }
   },
@@ -1500,8 +1511,23 @@ var gZenSyncSettings = {
 
   async handleDisconnect() {
     if (confirm("Are you sure you want to disconnect this device from sync? All credentials will be deleted locally.")) {
-      await ZenSyncService.disconnectAccount();
-      await this.updateUI();
+      try {
+        await ZenSyncService.disconnectAccount();
+      } catch (e) {
+        console.error("Error calling disconnectAccount:", e);
+      }
+      try {
+        await this.updateUI();
+      } catch (e) {
+        console.error("Error updating UI:", e);
+        // Fallback: force UI state swap
+        const setupGroup = document.getElementById("zenSyncSetupGroup");
+        const statusGroup = document.getElementById("zenSyncStatusGroup");
+        if (setupGroup && statusGroup) {
+          setupGroup.hidden = false;
+          statusGroup.hidden = true;
+        }
+      }
     }
   }
 };
