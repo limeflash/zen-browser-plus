@@ -320,3 +320,24 @@ zen-close-all-unpinned-tabs-shortcut = Закрыть все не закрепл
 zen-new-unsynced-window-shortcut = Новое пустое окно
 zen-duplicate-tab-shortcut = Дублировать вкладку
 zen-key-find-selection = Find Selection
+
+pane-zen-sync-title = Синхронизация Zen
+category-zen-sync =
+    .tooltiptext = { pane-zen-sync-title }
+
+zen-sync-setup-header = Настройка аккаунта синхронизации
+zen-sync-setup-description = Подключите свой браузер к собственному или публичному релею Zen Sync для синхронизации рабочих пространств и вкладок.
+zen-sync-relay-url-label = URL Релея:
+zen-sync-token-label = Токен регистрации:
+zen-sync-device-name-label = Имя устройства:
+zen-sync-passphrase-label = Пароль шифрования:
+zen-sync-join-fields-label = Данные аккаунта:
+zen-sync-status-header = Статус подключения
+zen-sync-status-label = Статус:
+zen-sync-active-device-label = Имя устройства:
+zen-sync-account-id-label = Account ID:
+zen-sync-salt-label = Key Salt:
+zen-sync-last-time-label = Последняя синхронизация: Никогда
+
+zen-sync-instructions-title = Как настроить синхронизацию
+zen-sync-instructions-desc = Для начала введите URL релея и пароль шифрования, затем нажмите Create Account. После создания скопируйте Account ID и Key Salt. На втором устройстве переключитесь в режим Join Existing Account, вставьте эти данные, введите тот же пароль и нажмите Join.

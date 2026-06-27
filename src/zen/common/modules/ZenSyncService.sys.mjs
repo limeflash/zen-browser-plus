@@ -4,11 +4,15 @@
 
 import { XPCOMUtils } from "resource://gre/modules/XPCOMUtils.sys.mjs";
 
+const { Cc, Ci } = Components;
+
 const lazy = {};
 
 ChromeUtils.defineESModuleGetters(lazy, {
   ZenSessionStore: "resource:///modules/zen/ZenSessionManager.sys.mjs",
   ZenWindowSync: "resource:///modules/zen/ZenWindowSync.sys.mjs",
+  setInterval: "resource://gre/modules/Timer.sys.mjs",
+  clearInterval: "resource://gre/modules/Timer.sys.mjs",
 });
 
 function bufToBase64(buf) {
@@ -42,26 +46,42 @@ export class nsZenSyncService {
     this.startPeriodicSync();
   }
 
+  #getStringPref(pref, defaultValue = "") {
+    try {
+      return Services.prefs.getStringPref(pref);
+    } catch (e) {
+      return defaultValue;
+    }
+  }
+
+  #getBoolPref(pref, defaultValue = false) {
+    try {
+      return Services.prefs.getBoolPref(pref);
+    } catch (e) {
+      return defaultValue;
+    }
+  }
+
   async isConfigured() {
-    const accountId = Services.prefs.getStringPref("zen.sync.account_id", "");
-    const deviceId = Services.prefs.getStringPref("zen.sync.device_id", "");
+    const accountId = this.#getStringPref("zen.sync.account_id");
+    const deviceId = this.#getStringPref("zen.sync.device_id");
     return !!(accountId && deviceId);
   }
 
   async getConfig() {
     return {
-      relayUrl: Services.prefs.getStringPref("zen.sync.relay_url", ""),
-      accountId: Services.prefs.getStringPref("zen.sync.account_id", ""),
-      deviceId: Services.prefs.getStringPref("zen.sync.device_id", ""),
-      deviceName: Services.prefs.getStringPref("zen.sync.device_name", ""),
-      salt: Services.prefs.getStringPref("zen.sync.salt", ""),
+      relayUrl: this.#getStringPref("zen.sync.relay_url"),
+      accountId: this.#getStringPref("zen.sync.account_id"),
+      deviceId: this.#getStringPref("zen.sync.device_id"),
+      deviceName: this.#getStringPref("zen.sync.device_name"),
+      salt: this.#getStringPref("zen.sync.salt"),
     };
   }
 
   async getStatus() {
-    const lastSyncTime = Services.prefs.getStringPref("zen.sync.last_sync_time", "");
-    const lastSyncDetails = Services.prefs.getStringPref("zen.sync.last_sync_details", "");
-    const connected = Services.prefs.getBoolPref("zen.sync.connected", false);
+    const lastSyncTime = this.#getStringPref("zen.sync.last_sync_time");
+    const lastSyncDetails = this.#getStringPref("zen.sync.last_sync_details");
+    const connected = this.#getBoolPref("zen.sync.connected", false);
     return {
       lastSyncTime: lastSyncTime ? parseInt(lastSyncTime, 10) : null,
       lastSyncDetails,
@@ -131,7 +151,7 @@ export class nsZenSyncService {
       .map(b => b.toString(16).padStart(2, "0"))
       .join("");
 
-    return { encryptionKey, authToken };
+    return { encryptionKey, authToken, authBits };
   }
 
   async encryptState(encryptionKey, data) {
@@ -161,10 +181,10 @@ export class nsZenSyncService {
   }
 
   async relayRequest(path, method = "GET", body = null, overrideHeaders = {}) {
-    const relayUrl = Services.prefs.getStringPref("zen.sync.relay_url", "");
+    const relayUrl = this.#getStringPref("zen.sync.relay_url");
     if (!relayUrl) throw new Error("Relay URL not configured");
 
-    const accountId = Services.prefs.getStringPref("zen.sync.account_id", "");
+    const accountId = this.#getStringPref("zen.sync.account_id");
     const authToken = this.getSecret("auth_token");
 
     const headers = {
@@ -190,25 +210,28 @@ export class nsZenSyncService {
     const saltBytes = crypto.getRandomValues(new Uint8Array(16));
     const saltB64 = bufToBase64(saltBytes);
 
-    const { encryptionKey, authToken } = await this.deriveKeys(passphrase, saltB64);
+    const { encryptionKey, authToken, authBits } = await this.deriveKeys(passphrase, saltB64);
 
     // Compute hash for auth token (sha256 of auth token + salt)
-    const authHashBuf = await crypto.subtle.digest(
-      "SHA-256",
-      new TextEncoder().encode(authToken + "_server_salt")
-    );
+    const saltBytesText = new TextEncoder().encode("zensync_server_salt");
+    const concatBytes = new Uint8Array(authBits.byteLength + saltBytesText.byteLength);
+    concatBytes.set(new Uint8Array(authBits), 0);
+    concatBytes.set(saltBytesText, authBits.byteLength);
+
+    const authHashBuf = await crypto.subtle.digest("SHA-256", concatBytes);
     const authHash = Array.from(new Uint8Array(authHashBuf))
       .map(b => b.toString(16).padStart(2, "0"))
       .join("");
 
-    // 1. Register account
-    const regHeader = {};
-    if (token) regHeader["X-Registration-Token"] = token;
-    
     // Temporarily save relay URL to allow relayRequest to resolve
     Services.prefs.setStringPref("zen.sync.relay_url", relayUrl);
 
-    const regResp = await this.relayRequest("/api/register", "POST", { auth_hash: authHash }, regHeader);
+    // 1. Register account
+    const regResp = await this.relayRequest("/api/register", "POST", {
+      auth_hash: authHash,
+      salt: saltB64,
+      token: token || "",
+    });
 
     // 2. Register device
     const deviceResp = await this.relayRequest(
@@ -262,6 +285,18 @@ export class nsZenSyncService {
     this.startPeriodicSync();
   }
 
+  async listDevices() {
+    const config = await this.getConfig();
+    if (!config.accountId) return [];
+    return this.relayRequest("/api/devices", "GET");
+  }
+
+  async deleteDevice(deviceId) {
+    const config = await this.getConfig();
+    if (!config.accountId) return;
+    return this.relayRequest(`/api/devices/${deviceId}`, "DELETE");
+  }
+
   async renameDevice(newName) {
     const config = await this.getConfig();
     if (!config.deviceId) return;
@@ -283,10 +318,19 @@ export class nsZenSyncService {
       let remoteState = null;
       let remoteTimestamp = 0;
       try {
-        const pullResp = await this.relayRequest("/api/sync/latest");
-        if (pullResp && pullResp.ciphertext) {
-          remoteState = await this.decryptState(encryptionKey, pullResp.ciphertext, pullResp.nonce);
-          remoteTimestamp = pullResp.timestamp || 0;
+        const pullResp = await this.relayRequest("/api/blobs", "GET", null, {
+          "X-Device-Id": config.deviceId,
+        });
+        if (pullResp && pullResp.length > 0) {
+          // Find the blob with the highest timestamp
+          let latestBlob = pullResp[0];
+          for (const blob of pullResp) {
+            if (blob.timestamp > latestBlob.timestamp) {
+              latestBlob = blob;
+            }
+          }
+          remoteState = await this.decryptState(encryptionKey, latestBlob.ciphertext, latestBlob.nonce);
+          remoteTimestamp = latestBlob.timestamp || 0;
         }
       } catch (e) {
         console.error("ZenSync: Pull error:", e);
@@ -333,10 +377,12 @@ export class nsZenSyncService {
       // 4. Push local state if we didn't just apply a newer remote state
       if (!applied) {
         const { ciphertext, nonce } = await this.encryptState(encryptionKey, localState);
-        await this.relayRequest("/api/sync", "POST", {
+        await this.relayRequest("/api/blobs", "POST", {
+          version: 1,
           ciphertext,
           nonce,
-          device_name: config.deviceName
+        }, {
+          "X-Device-Id": config.deviceId,
         });
       }
 
@@ -352,32 +398,56 @@ export class nsZenSyncService {
   }
 
   async disconnectAccount() {
-    this.stopPeriodicSync();
+    try {
+      this.stopPeriodicSync();
+    } catch (e) {
+      console.error("ZenSync: error stopping sync:", e);
+    }
 
-    this.deleteSecret("auth_token");
-    this.deleteSecret("passphrase");
+    try {
+      this.deleteSecret("auth_token");
+    } catch (e) {
+      console.error("ZenSync: error deleting auth_token:", e);
+    }
+    try {
+      this.deleteSecret("passphrase");
+    } catch (e) {
+      console.error("ZenSync: error deleting passphrase:", e);
+    }
 
-    Services.prefs.clearUserPref("zen.sync.relay_url");
-    Services.prefs.clearUserPref("zen.sync.account_id");
-    Services.prefs.clearUserPref("zen.sync.device_id");
-    Services.prefs.clearUserPref("zen.sync.device_name");
-    Services.prefs.clearUserPref("zen.sync.salt");
-    Services.prefs.clearUserPref("zen.sync.last_sync_time");
-    Services.prefs.clearUserPref("zen.sync.last_sync_details");
-    Services.prefs.clearUserPref("zen.sync.connected");
+    const prefsToClear = [
+      "zen.sync.relay_url",
+      "zen.sync.account_id",
+      "zen.sync.device_id",
+      "zen.sync.device_name",
+      "zen.sync.salt",
+      "zen.sync.last_sync_time",
+      "zen.sync.last_sync_details",
+      "zen.sync.connected"
+    ];
+
+    for (const pref of prefsToClear) {
+      try {
+        if (Services.prefs.prefHasUserValue(pref)) {
+          Services.prefs.clearUserPref(pref);
+        }
+      } catch (e) {
+        console.error(`ZenSync: error clearing pref ${pref}:`, e);
+      }
+    }
   }
 
   startPeriodicSync() {
     this.stopPeriodicSync();
     // Sync every 5 minutes (300,000 ms)
-    this.#syncIntervalId = setInterval(() => {
+    this.#syncIntervalId = lazy.setInterval(() => {
       this.syncNow().catch(e => console.error("ZenSync: background sync failed:", e));
     }, 300000);
   }
 
   stopPeriodicSync() {
     if (this.#syncIntervalId) {
-      clearInterval(this.#syncIntervalId);
+      lazy.clearInterval(this.#syncIntervalId);
       this.#syncIntervalId = null;
     }
   }

@@ -1252,6 +1252,8 @@ Preferences.addSetting({
 });
 
 var gZenSyncSettings = {
+  isJoinMode: false,
+
   async init() {
     const setupGroup = document.getElementById("zenSyncSetupGroup");
     const statusGroup = document.getElementById("zenSyncStatusGroup");
@@ -1280,17 +1282,15 @@ var gZenSyncSettings = {
     this.statusText = document.getElementById("zenSyncStatusText");
     this.statusDot = document.getElementById("zenSyncStatusDot");
 
-    this.btnSetup = document.getElementById("zenSyncBtnSetup");
-    this.btnJoin = document.getElementById("zenSyncBtnJoin");
-    this.btnToggleJoin = document.getElementById("zenSyncBtnToggleJoin");
+    this.btnAction = document.getElementById("zenSyncBtnAction");
+    this.btnSwitchMode = document.getElementById("zenSyncBtnSwitchMode");
     this.btnRename = document.getElementById("zenSyncBtnRenameDevice");
     this.btnSyncNow = document.getElementById("zenSyncBtnSyncNow");
     this.btnDisconnect = document.getElementById("zenSyncBtnDisconnect");
 
     // Add listeners
-    this.btnToggleJoin.addEventListener("click", () => this.toggleJoinFields());
-    this.btnSetup.addEventListener("click", () => this.handleSetup(false));
-    this.btnJoin.addEventListener("click", () => this.handleSetup(true));
+    this.btnAction.addEventListener("click", () => this.handleAction());
+    this.btnSwitchMode.addEventListener("click", () => this.toggleSetupMode());
     this.btnRename.addEventListener("click", () => this.handleRename());
     this.btnSyncNow.addEventListener("click", () => this.handleSyncNow());
     this.btnDisconnect.addEventListener("click", () => this.handleDisconnect());
@@ -1303,11 +1303,32 @@ var gZenSyncSettings = {
     });
   },
 
-  toggleJoinFields() {
-    const joinFields = document.getElementById("zenSyncJoinFields");
-    const hidden = joinFields.hidden;
-    joinFields.hidden = !hidden;
-    this.btnToggleJoin.label = hidden ? "Hide Join Fields" : "Show Join Fields";
+  toggleSetupMode() {
+    this.isJoinMode = !this.isJoinMode;
+    
+    const header = document.getElementById("zenSyncSetupHeader");
+    const desc = document.getElementById("zenSyncSetupDesc");
+    const rowToken = document.getElementById("zenSyncRowToken");
+    const rowJoinId = document.getElementById("zenSyncRowJoinAccountId");
+    const rowJoinSalt = document.getElementById("zenSyncRowJoinSalt");
+
+    if (this.isJoinMode) {
+      if (header) header.textContent = "Join Existing Account";
+      if (desc) desc.textContent = "Connect to an existing Zen Sync account using the credentials from your other device.";
+      if (rowToken) rowToken.hidden = true;
+      if (rowJoinId) rowJoinId.hidden = false;
+      if (rowJoinSalt) rowJoinSalt.hidden = false;
+      if (this.btnAction) this.btnAction.label = "Join Account";
+      if (this.btnSwitchMode) this.btnSwitchMode.label = "Create New Account Instead";
+    } else {
+      if (header) header.textContent = "Create New Sync Account";
+      if (desc) desc.textContent = "Connect your browser to a self-hosted or public Zen Sync relay to synchronize workspaces and tabs.";
+      if (rowToken) rowToken.hidden = false;
+      if (rowJoinId) rowJoinId.hidden = true;
+      if (rowJoinSalt) rowJoinSalt.hidden = true;
+      if (this.btnAction) this.btnAction.label = "Create Account";
+      if (this.btnSwitchMode) this.btnSwitchMode.label = "Join Existing Account Instead";
+    }
   },
 
   async updateUI() {
@@ -1318,14 +1339,18 @@ var gZenSyncSettings = {
     if (!isConfigured) {
       setupGroup.hidden = false;
       statusGroup.hidden = true;
-      this.relayUrlInput.value = Services.prefs.getStringPref("zen.sync.relay_url", "");
+      try {
+        this.relayUrlInput.value = Services.prefs.getStringPref("zen.sync.relay_url");
+      } catch (e) {
+        this.relayUrlInput.value = "";
+      }
       this.deviceNameInput.value = "";
       this.passphraseInput.value = "";
       this.tokenInput.value = "";
       this.joinAccountIdInput.value = "";
       this.joinSaltInput.value = "";
-      document.getElementById("zenSyncJoinFields").hidden = true;
-      this.btnToggleJoin.label = "Show Join Fields";
+      this.isJoinMode = true; // force toggleSetupMode to switch to false (Create Mode)
+      this.toggleSetupMode();
     } else {
       setupGroup.hidden = true;
       statusGroup.hidden = false;
@@ -1345,42 +1370,98 @@ var gZenSyncSettings = {
       } else {
         this.lastTimeLabel.value = "Last Synced: Never";
       }
+
+      // Update linked devices list
+      const listContainer = document.getElementById("zenSyncDeviceList");
+      if (listContainer) {
+        listContainer.textContent = "";
+        try {
+          const devices = await ZenSyncService.listDevices();
+          if (devices && devices.length > 0) {
+            for (const device of devices) {
+              const deviceRow = document.createElement("div");
+              deviceRow.className = "device-item-row";
+
+              const nameSpan = document.createElement("span");
+              nameSpan.textContent = device.name + (device.device_id === config.deviceId ? " (Current Device)" : "");
+              nameSpan.style.flex = "1";
+              nameSpan.style.fontWeight = device.device_id === config.deviceId ? "600" : "400";
+
+              const seenSpan = document.createElement("span");
+              seenSpan.style.color = "var(--in-content-deemphasized-text, #a3a3a3)";
+              seenSpan.style.fontSize = "11px";
+              seenSpan.style.marginRight = "12px";
+              const lastSeenDate = new Date(device.last_seen * 1000).toLocaleString();
+              seenSpan.textContent = `Last seen: ${lastSeenDate}`;
+
+              deviceRow.appendChild(nameSpan);
+              deviceRow.appendChild(seenSpan);
+
+              if (device.device_id !== config.deviceId) {
+                const revokeBtn = document.createElement("button");
+                revokeBtn.textContent = "Revoke";
+                revokeBtn.className = "accessory-button";
+                revokeBtn.setAttribute("is", "highlightable-button");
+                revokeBtn.addEventListener("click", async () => {
+                  if (confirm(`Are you sure you want to revoke/remove device "${device.name}"?`)) {
+                    revokeBtn.disabled = true;
+                    try {
+                      await ZenSyncService.deleteDevice(device.device_id);
+                      await this.updateUI();
+                    } catch (e) {
+                      alert(`Failed to revoke device: ${e.message}`);
+                      revokeBtn.disabled = false;
+                    }
+                  }
+                });
+                deviceRow.appendChild(revokeBtn);
+              }
+
+              listContainer.appendChild(deviceRow);
+            }
+          } else {
+            listContainer.textContent = "No linked devices found.";
+          }
+        } catch (e) {
+          listContainer.textContent = `Error loading devices: ${e.message}`;
+        }
+      }
     }
   },
 
-  async handleSetup(isJoin) {
+  async handleAction() {
     const relayUrl = this.relayUrlInput.value.trim();
     const passphrase = this.passphraseInput.value;
     const deviceName = this.deviceNameInput.value.trim() || "Desktop Browser";
-    const token = this.tokenInput.value.trim();
 
     if (!relayUrl || !passphrase) {
       alert("Relay URL and Passphrase are required!");
       return;
     }
 
-    this.btnSetup.disabled = true;
-    this.btnJoin.disabled = true;
+    this.btnAction.disabled = true;
+    this.btnSwitchMode.disabled = true;
     try {
-      if (isJoin) {
+      if (this.isJoinMode) {
         const accountId = this.joinAccountIdInput.value.trim();
         const salt = this.joinSaltInput.value.trim();
         if (!accountId || !salt) {
           alert("Account ID and Salt are required to join an existing account!");
-          this.btnSetup.disabled = false;
-          this.btnJoin.disabled = false;
+          this.btnAction.disabled = false;
+          this.btnSwitchMode.disabled = false;
           return;
         }
         await ZenSyncService.joinAccount({ relayUrl, accountId, salt, passphrase, deviceName });
       } else {
+        const token = this.tokenInput.value.trim();
         await ZenSyncService.setupAccount({ relayUrl, token, passphrase, deviceName });
       }
       await this.updateUI();
     } catch (e) {
       alert(`Setup failed: ${e.message}`);
     } finally {
-      this.btnSetup.disabled = false;
-      this.btnJoin.disabled = false;
+      this.btnAction.disabled = false;
+      this.btnSwitchMode.disabled = false;
     }
   },
 

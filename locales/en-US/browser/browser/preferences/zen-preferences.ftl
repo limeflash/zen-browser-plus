@@ -378,3 +378,6 @@ zen-sync-active-device-label = Device Name:
 zen-sync-account-id-label = Account ID:
 zen-sync-salt-label = Key Salt:
 zen-sync-last-time-label = Last Synced: Never
+
+zen-sync-instructions-title = How to Sync Your Devices
+zen-sync-instructions-desc = To start, enter your Relay URL and Passphrase, then click Create Account. Once created, copy the Account ID and Key Salt. On your second device, switch to Join Existing Account, enter the copied credentials with the same passphrase, and click Join.

@@ -1,52 +1,54 @@
-<!--
-   - This Source Code Form is subject to the terms of the Mozilla Public
-   - License, v. 2.0. If a copy of the MPL was not distributed with this
-   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
-   -->
-<!-- TODO: Get a job -->
-<img src="./docs/assets/zen-dark.svg" width="100px" align="left">
+# <img src="./docs/assets/zen-logo-plus.png" width="48" align="center" style="border-radius: 20%;"> Zen Browser ++
 
-### `Zen Browser`
+**Zen Browser ++** is an advanced, premium, and feature-rich fork of Zen Browser, built on top of the powerful, privacy-first foundations of Mozilla Firefox. It brings enhanced customization, optimized UI components, and safe sync utilities to deliver the ultimate web browsing experience.
 
-[![Downloads](https://img.shields.io/github/downloads/zen-browser/desktop/total.svg)](https://github.com/zen-browser/desktop/releases)
-[![Crowdin](https://badges.crowdin.net/zen-browser/localized.svg)](https://crowdin.com/project/zen-browser)
-[![Zen Release builds](https://github.com/zen-browser/desktop/actions/workflows/build.yml/badge.svg?branch=stable)](https://github.com/zen-browser/desktop/actions/workflows/build.yml)
+---
 
-Zen is a firefox-based browser with the aim of pushing your productivity to a new level!
+## Key Features
 
-<div flex="true">
-  <a href="https://zen-browser.app/download">
-    Download
-  </a>
-  •
-  <a href="https://zen-browser.app">
-    Website
-  </a>
-  •
-  <a href="https://docs.zen-browser.app">
-    Documentation
-  </a>
-  •
-  <a href="https://zen-browser.app/release-notes/latest">
-    Release Notes
-  </a>
-</div>
+- **Redesigned Zen Sync Setup**: A premium, intuitive configuration screen with localized (EN/RU) step-by-step instructions.
+- **Fail-safe Sync Account Management**: Completely bulletproof connection toggle allowing you to disconnect and switch accounts instantly.
+- **Modern, Fluent UI**: Tailored visual adjustments including matching accent colors, refined padding, and native information cards.
+- **Enhanced Privacy Configurations**: Default safe settings ensuring your keys, salts, and credentials remain private and secure.
 
-### Firefox Versions
+---
 
-- [`Release`](https://zen-browser.app/download) - Is currently built using Firefox version `152.0.3`! 🚀
-- [`Twilight`](https://zen-browser.app/download?twilight) - Is currently built using Firefox version `RC 152.0.3`!
+## Acknowledgements & Credits
 
-### Contributing
+We stand on the shoulders of giants. **Zen Browser ++** would not be possible without the incredible work of these open-source projects:
 
-If you'd like to report a bug, please do so on our [GitHub Issues page](https://github.com/zen-browser/desktop/issues/) and for feature requests, you can use [GitHub Discussions](https://github.com/zen-browser/desktop/discussions).
+- **[Mozilla Firefox](https://www.mozilla.org/firefox/)**: For providing the robust, secure, and privacy-first browser engine that powers the modern web.
+- **[Zen Browser](https://zen-browser.app/)**: For creating a beautiful, innovative, and highly productive vertical-tab desktop browser paradigm.
 
-Zen is an open-source project, and we welcome contributions from the community! Please take a look at the [contribution guidelines](./docs/contribute.md) before getting started!
+We are deeply grateful to both communities for their outstanding contributions to open-source software!
 
-#### Partners
+---
 
-Thanks to all the partners of Zen for their support and contributions:
+## Getting Started
 
-<a href="https://blacksmith.sh">
-  <img src="./docs/assets/blacksmith-yellow.png" width="350px"/>
-</a>
+### Prerequisites
+
+To build and run Zen Browser ++ locally, ensure you have:
+- Node.js (v20+ recommended)
+- Mozilla Build Environment tools (for compilation)
+
+### Build and Run
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Build the user interface:
+   ```bash
+   npm run build:ui
+   ```
+3. Start the browser:
+   ```bash
+   npm start
+   ```
+
+---
+
+## License
+
+This project is licensed under the terms of the **Mozilla Public License, v. 2.0**.
