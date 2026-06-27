@@ -1287,6 +1287,7 @@ var gZenSyncSettings = {
     this.btnRename = document.getElementById("zenSyncBtnRenameDevice");
     this.btnSyncNow = document.getElementById("zenSyncBtnSyncNow");
     this.btnDisconnect = document.getElementById("zenSyncBtnDisconnect");
+    this.btnDeleteAccount = document.getElementById("zenSyncBtnDeleteAccount");
 
     // Add listeners
     this.btnAction.addEventListener("click", () => this.handleAction());
@@ -1294,6 +1295,9 @@ var gZenSyncSettings = {
     this.btnRename.addEventListener("click", () => this.handleRename());
     this.btnSyncNow.addEventListener("click", () => this.handleSyncNow());
     this.btnDisconnect.addEventListener("click", () => this.handleDisconnect());
+    if (this.btnDeleteAccount) {
+      this.btnDeleteAccount.addEventListener("click", () => this.handleDeleteAccount());
+    }
 
     // Initialize UI state
     await this.updateUI();
@@ -1515,6 +1519,30 @@ var gZenSyncSettings = {
         await ZenSyncService.disconnectAccount();
       } catch (e) {
         console.error("Error calling disconnectAccount:", e);
+      }
+      try {
+        await this.updateUI();
+      } catch (e) {
+        console.error("Error updating UI:", e);
+        // Fallback: force UI state swap
+        const setupGroup = document.getElementById("zenSyncSetupGroup");
+        const statusGroup = document.getElementById("zenSyncStatusGroup");
+        if (setupGroup && statusGroup) {
+          setupGroup.hidden = false;
+          statusGroup.hidden = true;
+        }
+      }
+    }
+  },
+
+  async handleDeleteAccount() {
+    if (confirm("Are you sure you want to PERMANENTLY delete your sync account from the server? This cannot be undone and will delete all data on the relay.")) {
+      try {
+        await ZenSyncService.deleteAccountFromServer();
+        alert("Account deleted successfully!");
+      } catch (e) {
+        console.error("Error calling deleteAccountFromServer:", e);
+        alert(`Failed to delete account from server: ${e.message}`);
       }
       try {
         await this.updateUI();

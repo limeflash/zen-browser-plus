@@ -437,6 +437,20 @@ export class nsZenSyncService {
     }
   }
 
+  async deleteAccountFromServer() {
+    const config = await this.getConfig();
+    if (!config.accountId) return;
+
+    try {
+      await this.relayRequest("/api/account", "DELETE");
+    } catch (e) {
+      console.error("ZenSync: error deleting account from server:", e);
+      throw e;
+    }
+
+    await this.disconnectAccount();
+  }
+
   startPeriodicSync() {
     this.stopPeriodicSync();
     // Sync every 5 minutes (300,000 ms)
