@@ -4,7 +4,7 @@
 
 import { XPCOMUtils } from "resource://gre/modules/XPCOMUtils.sys.mjs";
 
-const { Cc, Ci } = Components;
+const { classes: Cc, interfaces: Ci } = Components;
 
 const lazy = {};
 
