@@ -1,0 +1,3 @@
+[submodule "src/zen/sync"]
+	path = src/zen/sync
+	url = https://github.com/limeflash/zen-sync.git

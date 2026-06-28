@@ -113,20 +113,54 @@ ac_add_options MOZ_TELEMETRY_REPORTING=
 export MOZ_REQUIRE_SIGNING=
 mk_add_options MOZ_REQUIRE_SIGNING=
 
-# Compiler - use LLVM clang-cl
-export CC="C:/LLVM/bin/clang-cl.exe"
-export CXX="C:/LLVM/bin/clang-cl.exe"
-export CFLAGS="-D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH"
-export CXXFLAGS="-D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH"
-export HOST_CFLAGS="-D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH"
-export HOST_CXXFLAGS="-D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH"
-export BINDGEN_EXTRA_CLANG_ARGS="-D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH"
+# --- Native Windows local developer toolchain -------------------------------
+# These settings are specific to building natively on a Windows (MozillaBuild)
+# host. They MUST NOT be applied to macOS/Linux or cross-compiled CI builds,
+# where the absolute Windows paths below would break `configure`. The guard is
+# evaluated by mach at configure time, so it is a no-op on every other platform
+# even though surfer copies this block into the generated mozconfig everywhere.
+#
+# Machine-specific paths (compiler, Windows App SDK, windows-rs) can be
+# overridden per machine — without editing this tracked file — by creating an
+# untracked configs/common/mozconfig.local.
+case "$(uname -s 2>/dev/null)" in
+  MINGW*|MSYS*|CYGWIN*)
+    if test -z "$ZEN_CROSS_COMPILING"; then
+      # System LLVM clang-cl. VS 2022 14.4x ships an STL that hard-errors
+      # (STL1000) unless the compiler is Clang >= 19; this system clang is 18,
+      # so we set _ALLOW_COMPILER_AND_STL_VERSION_MISMATCH on every compile
+      # (target AND host) to suppress that gate. HOST_CC/HOST_CXX are pinned
+      # explicitly so the host tools (e.g. modules/libmar) use the same clang
+      # and pick up the define. NOTE: mach bootstrap / --enable-bootstrap cannot
+      # provide a newer clang here because this fork's taskgraph is broken
+      # (missing taskcluster/scripts/misc/build-7zz.sh). Override per machine via
+      # configs/common/mozconfig.local (sourced below).
+      export CC="C:/LLVM/bin/clang-cl.exe"
+      export CXX="C:/LLVM/bin/clang-cl.exe"
+      export HOST_CC="C:/LLVM/bin/clang-cl.exe"
+      export HOST_CXX="C:/LLVM/bin/clang-cl.exe"
+      export CFLAGS="-D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH"
+      export CXXFLAGS="-D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH"
+      export HOST_CFLAGS="-D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH"
+      export HOST_CXXFLAGS="-D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH"
+      export BINDGEN_EXTRA_CLANG_ARGS="-D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH"
 
-# Windows App SDK and Windows-rs
-export MOZ_WINDOWS_APP_SDK_DIR="G:/projects/winappsdk-stub"
-export MOZ_WINDOWS_RS_DIR="G:/projects/windows-rs/windows-0.62.2"
+      # Windows App SDK and windows-rs (machine-specific absolute paths)
+      export MOZ_WINDOWS_APP_SDK_DIR="G:/projects/winappsdk-stub"
+      export MOZ_WINDOWS_RS_DIR="G:/projects/windows-rs/windows-0.62.2"
 
-# Bypasses for dev build errors
-ac_add_options --disable-stl-hardening
-ac_add_options --without-wasm-sandboxed-libraries
+      # Bypasses for local dev build errors
+      ac_add_options --disable-stl-hardening
+      ac_add_options --without-wasm-sandboxed-libraries
+      # The maintenance-service installer isn't built in this unofficial config,
+      # but the package manifest expects it; disable it so packaging succeeds.
+      ac_add_options --disable-maintenance-service
+
+      # Optional per-machine overrides (untracked, see .gitignore)
+      if test -f "${topsrcdir}/../configs/common/mozconfig.local"; then
+        . "${topsrcdir}/../configs/common/mozconfig.local"
+      fi
+    fi
+    ;;
+esac
 

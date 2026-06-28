@@ -28,6 +28,12 @@ locales/firefox-l10n/
 
 mozconfig
 
+# Per-machine native-Windows toolchain overrides (see configs/common/mozconfig)
+configs/common/mozconfig.local
+
+# Local build/bootstrap logs
+*.log
+
 build/signing/env/
 build/signing/nss_config/
 build/signing/cert.pem
