@@ -51,7 +51,7 @@ index 9760a4a35b0b3bd21edec07a70c10bccc23e4a09..9f22146c259ea5b45005be660bfcb9ea
 +#include zenKeyboardShortcuts.inc.xhtml
 +#include zenTabsManagement.inc.xhtml
 +#include zenMarketplace.inc.xhtml
-+#include zenSync.inc.xhtml
++#include ../../../zen/sync/client/preferences/zenSync.inc.xhtml
          </vbox>
        </vbox>
      </vbox>
