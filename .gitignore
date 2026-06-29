@@ -41,3 +41,6 @@ build/signing/private_key.pem
 build/signing/private_key.p12
 
 bloat-dump.log
+
+# MAR auto-update signing key (PRIVATE — never commit)
+mar-signing/

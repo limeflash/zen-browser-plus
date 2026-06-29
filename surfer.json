@@ -16,13 +16,13 @@
   "brands": {
     "release": {
       "backgroundColor": "#282A33",
-      "brandShorterName": "Zen",
-      "brandShortName": "Zen",
-      "brandFullName": "Zen Browser",
+      "brandShorterName": "Zen++",
+      "brandShortName": "Zen++",
+      "brandFullName": "Zen++ Browser",
       "release": {
         "displayVersion": "1.21.4b",
         "github": {
-          "repo": "zen-browser/desktop"
+          "repo": "limeflash/zen-browser-plus"
         },
         "archives": {
           "windows": "windows.mar",
@@ -53,5 +53,5 @@
     ],
     "licenseType": "MPL-2.0"
   },
-  "updateHostname": "updates.zen-browser.app"
+  "updateHostname": "limeflash.github.io/zen-browser-plus"
 }
