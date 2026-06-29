@@ -1,0 +1,1 @@
+Zen++ update endpoint. See /updates/browser/<target>/<channel>/update.xml

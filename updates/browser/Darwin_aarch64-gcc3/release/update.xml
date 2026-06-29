@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<updates>
+  <update type="minor" displayVersion="1.21.4b" appVersion="1.21.4b" platformVersion="152.0.3" buildID="20260629192337" detailsURL="https://github.com/limeflash/zen-browser-plus/releases/tag/1.21.4b">
+    <patch type="complete" URL="https://github.com/limeflash/zen-browser-plus/releases/download/1.21.4b/macos.mar" hashFunction="sha512" hashValue="153d02355715e335d19e4dec4b8c5ceef36ea320600f875026c6dcb43f2727bcbe4addd01fac6de9de43b3e763ded41778674f8d9465a94fbc5731f8de5fe454" size="74007507"/>
+  </update>
+</updates>
